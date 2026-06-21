@@ -285,7 +285,7 @@ export default function BookingWidget({
   }
 
   return (
-    <div style={rootStyle} className="flex h-full min-h-[520px] flex-col bg-surface text-ink">
+    <div style={rootStyle} className="flex min-h-[520px] flex-col bg-surface text-ink md:h-full">
       <AnimatePresence mode="wait">
         {step === "pick" && (
           <motion.div
@@ -297,7 +297,7 @@ export default function BookingWidget({
             className="flex min-h-0 flex-1 flex-col"
           >
             <Header cfg={cfg} eventTypeId={eventTypeId} onPick={pickEventType} selected={selectedEventType} />
-            <div className="grid min-h-0 flex-1 grid-cols-1 overflow-y-auto md:grid-cols-[1fr_318px] md:overflow-hidden md:[grid-template-rows:minmax(0,1fr)]">
+            <div className="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[1fr_318px] md:overflow-hidden md:[grid-template-rows:minmax(0,1fr)]">
               <CalendarPanel
                 view={view}
                 setView={setView}
@@ -700,7 +700,7 @@ function SlotPanel({
         )}
       </div>
 
-      <div className="slot-scroll -mr-2 min-h-[120px] flex-1 space-y-2.5 overflow-y-auto pr-2 md:min-h-0">
+      <div className="slot-scroll -mr-2 min-h-[120px] flex-1 space-y-2.5 pr-2 md:overflow-y-auto md:min-h-0">
         {loading ? (
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-12 animate-pulse rounded-[10px] border-2 border-ink/10 bg-[#efece3]" />

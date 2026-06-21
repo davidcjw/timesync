@@ -57,18 +57,22 @@
 
     overlay = document.createElement("div");
     overlay.setAttribute("data-timesync-overlay", "");
+    var mobile = window.innerWidth < 640;
+
     overlay.style.cssText =
       "position:fixed;inset:0;z-index:2147483647;background:rgba(10,10,10,.55);" +
       "backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);display:flex;" +
-      "align-items:center;justify-content:center;padding:20px;opacity:0;" +
+      "align-items:center;justify-content:center;padding:" + (mobile ? "0" : "20px") + ";opacity:0;" +
       "transition:opacity .2s ease;font-family:system-ui,-apple-system,sans-serif;";
 
     var card = document.createElement("div");
-    card.style.cssText =
-      "position:relative;width:100%;max-width:980px;height:90vh;max-height:740px;" +
-      "background:#ffffff;border:2px solid #0a0a0a;border-radius:14px;overflow:hidden;" +
-      "box-shadow:10px 10px 0 #0a0a0a;transform:translateY(10px) scale(.985);" +
-      "transition:transform .2s ease;";
+    card.style.cssText = mobile
+      ? "position:relative;width:100%;height:100%;background:#ffffff;overflow:hidden;" +
+        "transform:translateY(12px);transition:transform .2s ease;"
+      : "position:relative;width:100%;max-width:980px;height:90vh;max-height:740px;" +
+        "background:#ffffff;border:2px solid #0a0a0a;border-radius:14px;overflow:hidden;" +
+        "box-shadow:10px 10px 0 #0a0a0a;transform:translateY(10px) scale(.985);" +
+        "transition:transform .2s ease;";
 
     var iframe = document.createElement("iframe");
     iframe.src = buildUrl(opts);

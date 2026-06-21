@@ -15,7 +15,7 @@ export default function BookClient() {
 
   if (embed) {
     return (
-      <div className="h-dvh w-full overflow-hidden bg-surface">
+      <div className="min-h-dvh w-full bg-surface">
         <BookingWidget
           embed
           presetEventType={presetEventType}
