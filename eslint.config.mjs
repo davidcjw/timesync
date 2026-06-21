@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Vendored design-system build artifacts — not ours to lint.
+    "vendor/**",
   ]),
 ]);
 

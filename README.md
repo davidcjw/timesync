@@ -151,9 +151,9 @@ All endpoints return JSON and send permissive CORS headers, so you can build a f
 
 ## Design system
 
-The UI is built with **[clico-ds](../design-systems/clico-ds)** — a playful neo-brutalist design
-system (cream paper, 2px ink borders + hard offset shadows, pill CTAs, lime accent, Instrument
-Sans/Serif + JetBrains Mono). It's consumed as a local package:
+The UI is built with **clico-ds** — a playful neo-brutalist design system (cream paper, 2px ink
+borders + hard offset shadows, pill CTAs, lime accent, Instrument Sans/Serif + JetBrains Mono),
+vendored into this repo at [`vendor/clico-ds`](vendor/clico-ds) so the app is self-contained:
 
 ```bash
 # already wired in package.json + .npmrc (install-links=true)
@@ -166,8 +166,8 @@ landing page, and host-demo compose `Button`, `Panel`, `Badge`, `BrowserFrame`, 
 the `--clico-*` tokens. The embed accent is the `--clico-lime` token, overridable per-embed via the
 `color` option.
 
-> **Note:** clico-ds is a `file:` dependency. `.npmrc` sets `install-links=true` so it's copied into
-> `node_modules` (not symlinked), which Turbopack needs to resolve it.
+> **Note:** clico-ds is a `file:vendor/clico-ds` dependency. `.npmrc` sets `install-links=true` so
+> it's copied into `node_modules` (not symlinked), which Turbopack needs to resolve it.
 
 ## Tech stack
 
@@ -202,7 +202,7 @@ By participating you agree to uphold a welcoming, harassment-free environment.
 
 ## Acknowledgements
 
-- UI built with [clico-ds](../design-systems/clico-ds) — a neo-brutalist React design system
+- UI built with clico-ds — a neo-brutalist React design system (vendored in `vendor/clico-ds`)
 - Calendar integration via [`googleapis`](https://github.com/googleapis/google-api-nodejs-client)
 - Bootstrapped with [Next.js](https://nextjs.org)
 

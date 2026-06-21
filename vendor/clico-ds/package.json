@@ -1,0 +1,51 @@
+{
+  "name": "clico-ds",
+  "version": "0.1.0",
+  "description": "Design system reverse-extracted from tryclico.com",
+  "type": "module",
+  "license": "MIT",
+  "main": "./dist/clico-ds.cjs",
+  "module": "./dist/clico-ds.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/clico-ds.js",
+      "require": "./dist/clico-ds.cjs"
+    },
+    "./styles.css": "./dist/clico-ds.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "tsc --noEmit && vite build",
+    "dev": "vite build --watch",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "design-cards": "node scripts/build-design-cards.mjs"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "overrides": {
+    "esbuild": "^0.28.1"
+  },
+  "devDependencies": {
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/react-vite": "^10.4.6",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^5.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "storybook": "^10.4.6",
+    "typescript": "^5.6.3",
+    "vite": "^7.3.5",
+    "vite-plugin-dts": "^4.5.4"
+  }
+}

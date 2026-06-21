@@ -36,7 +36,8 @@ embeddable modal. No database — Google Calendar is the source of truth.
 ## Design system (clico-ds)
 
 - The UI uses **clico-ds** (neo-brutalist: cream paper, 2px ink borders + hard offset shadows, pill
-  CTAs, lime accent, Instrument Sans/Serif + JetBrains Mono). Installed as a `file:` dep; `.npmrc`
+  CTAs, lime accent, Instrument Sans/Serif + JetBrains Mono). It's **vendored at `vendor/clico-ds`**
+  (so the repo is self-contained / deployable) and consumed as a `file:vendor/clico-ds` dep; `.npmrc`
   has `install-links=true` so Turbopack can resolve it (a bare symlink fails to resolve).
 - `app/layout.tsx` imports `clico-ds/styles.css` first, then `globals.css`. Components import
   `Button/Panel/Badge/BrowserFrame/FeatureCard/DisplayHeading/SerifAccent/WindowDots` from `clico-ds`.
