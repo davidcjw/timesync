@@ -1,26 +1,87 @@
 @import "tailwindcss";
 
+/* Timesync now speaks clico-ds: cream paper, ink, hard borders + offset shadows,
+   pill CTAs, lime accent, Instrument Sans/Serif + JetBrains Mono.
+   Tokens here mirror clico-ds (loaded via "clico-ds/styles.css"). */
+@theme {
+  --font-sans: var(--clico-font-sans);
+  --font-serif: var(--clico-font-serif);
+  --font-mono: var(--clico-font-mono);
+
+  --color-paper: #f6f3ec;
+  --color-surface: #ffffff;
+  --color-ink: #0a0a0a;
+  --color-muted: #5a5a5a;
+  --color-faint: #999999;
+
+  --color-lime: #c1f04c;
+  --color-mint: #daf5f0;
+  --color-lilac: #c4a1ff;
+  --color-butter: #fdfd96;
+  --color-peach: #f8d6b3;
+  --color-coral: #ff5f57;
+  --color-amber: #ffbd2e;
+  --color-green: #28c840;
+
+  --shadow-hard-sm: 2px 2px 0 #0a0a0a;
+  --shadow-hard: 4px 4px 0 #0a0a0a;
+  --shadow-hard-lg: 6px 6px 0 #0a0a0a;
+  --shadow-hard-xl: 8px 8px 0 #0a0a0a;
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--clico-font-sans, ui-sans-serif, system-ui, sans-serif);
+    background: #f6f3ec;
+    color: #0a0a0a;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: #c1f04c;
+    color: #0a0a0a;
+  }
+  :focus-visible {
+    outline: 2px solid #0a0a0a;
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Dotted ink grid behind the marketing hero. */
+.bg-dotgrid {
+  background-image: radial-gradient(rgba(10, 10, 10, 0.16) 1.4px, transparent 1.4px);
+  background-size: 22px 22px;
+}
+
+/* Thin ink scrollbar for the time-slot column. */
+.slot-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #0a0a0a transparent;
+}
+.slot-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.slot-scroll::-webkit-scrollbar-thumb {
+  background: #0a0a0a;
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
 }
