@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import fs from "node:fs";
 import path from "node:path";
 import { exchangeCode } from "@/lib/google";
+import { OAUTH_STATE_COOKIE } from "../route";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +10,16 @@ export async function GET(req: NextRequest) {
   const origin = req.nextUrl.origin;
   const code = req.nextUrl.searchParams.get("code");
   if (!code) return NextResponse.redirect(`${origin}/setup?error=no_code`);
+
+  // CSRF: the `state` returned by Google must match the cookie we set when the
+  // flow started. Reject mismatches before exchanging the code.
+  const state = req.nextUrl.searchParams.get("state");
+  const cookieState = req.cookies.get(OAUTH_STATE_COOKIE)?.value;
+  if (!state || !cookieState || state !== cookieState) {
+    const bad = new NextResponse("Invalid OAuth state", { status: 400 });
+    bad.cookies.delete(OAUTH_STATE_COOKIE);
+    return bad;
+  }
 
   const redirectUri =
     process.env.GOOGLE_REDIRECT_URI ?? `${origin}/api/auth/google/callback`;
@@ -19,9 +30,11 @@ export async function GET(req: NextRequest) {
     if (!refresh) return NextResponse.redirect(`${origin}/setup?error=no_refresh_token`);
 
     // The refresh token is the secret you store. In local dev we persist it to
-    // .env.local automatically; everywhere it is also logged to the server
-    // console so you can copy it into your host's env (e.g. Vercel).
-    console.log("\n[timesync] GOOGLE_REFRESH_TOKEN=" + refresh + "\n");
+    // .env.local automatically. NEVER log the full token — only a masked hint so
+    // secrets don't leak into server/host logs.
+    console.log(
+      `[timesync] connected — GOOGLE_REFRESH_TOKEN=${refresh.slice(0, 6)}… (masked)`,
+    );
 
     if (process.env.NODE_ENV !== "production") {
       try {
@@ -39,9 +52,15 @@ export async function GET(req: NextRequest) {
     }
 
     const masked = `${refresh.slice(0, 6)}…${refresh.slice(-4)}`;
-    return NextResponse.redirect(`${origin}/setup?connected=1&masked=${encodeURIComponent(masked)}`);
+    const ok = NextResponse.redirect(
+      `${origin}/setup?connected=1&masked=${encodeURIComponent(masked)}`,
+    );
+    ok.cookies.delete(OAUTH_STATE_COOKIE); // single-use state
+    return ok;
   } catch (err) {
     const message = err instanceof Error ? err.message : "exchange_failed";
-    return NextResponse.redirect(`${origin}/setup?error=${encodeURIComponent(message)}`);
+    const fail = NextResponse.redirect(`${origin}/setup?error=${encodeURIComponent(message)}`);
+    fail.cookies.delete(OAUTH_STATE_COOKIE);
+    return fail;
   }
 }

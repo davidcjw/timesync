@@ -15,11 +15,12 @@ function client(redirectUri?: string) {
   );
 }
 
-export function authUrl(redirectUri: string): string {
+export function authUrl(redirectUri: string, state: string): string {
   return client(redirectUri).generateAuthUrl({
     access_type: "offline",
     prompt: "consent", // force a refresh_token every time
     scope: SCOPES,
+    state, // CSRF token; verified against a cookie in the callback
   });
 }
 
