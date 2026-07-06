@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Badge, Button, Panel, SerifAccent } from "clico-ds";
 import { useBookerTimeZone } from "@/lib/clientHooks";
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar as CalendarIcon,
   Check,
@@ -112,6 +113,7 @@ export default function BookingWidget({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [slotsError, setSlotsError] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   const [step, setStep] = useState<"pick" | "details" | "done">("pick");
@@ -129,12 +131,19 @@ export default function BookingWidget({
   const loadSlots = useCallback(async (dateStr: string, etId: string) => {
     setSlotsLoading(true);
     setSlots(null);
+    setSlotsError(false);
     try {
       const r = await fetch(`/api/availability?date=${dateStr}&eventType=${etId}`);
+      if (!r.ok) {
+        setSlots([]);
+        setSlotsError(true);
+        return;
+      }
       const j = await r.json();
       setSlots(j.slots ?? []);
     } catch {
       setSlots([]);
+      setSlotsError(true);
     } finally {
       setSlotsLoading(false);
     }
@@ -312,6 +321,7 @@ export default function BookingWidget({
                 bookerTz={bookerTz}
                 slots={slots}
                 loading={slotsLoading}
+                error={slotsError}
                 onPick={pickSlot}
               />
             </div>
@@ -681,12 +691,14 @@ function SlotPanel({
   bookerTz,
   slots,
   loading,
+  error,
   onPick,
 }: {
   selectedDate: string | null;
   bookerTz: string;
   slots: Slot[] | null;
   loading: boolean;
+  error: boolean;
   onPick: (slot: Slot) => void;
 }) {
   return (
@@ -705,6 +717,12 @@ function SlotPanel({
           Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-12 animate-pulse rounded-[10px] border-2 border-ink/10 bg-[#efece3]" />
           ))
+        ) : error ? (
+          <div className="flex h-full flex-col items-center justify-center py-10 text-center">
+            <AlertTriangle className="h-7 w-7 text-faint" />
+            <p className="mt-2 text-sm font-bold text-ink">Couldn’t load times</p>
+            <p className="font-mono text-[11px] text-muted">Please try again shortly.</p>
+          </div>
         ) : slots && slots.length > 0 ? (
           slots.map((slot) => (
             <button

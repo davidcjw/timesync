@@ -41,7 +41,16 @@ export async function POST(req: NextRequest) {
   const dateStr = toDateStr(y, mo, d);
   const dayStart = zonedWallToUtc(y, mo, d, 0, 0, config.timeZone);
   const dayEnd = new Date(zonedWallToUtc(y, mo, d, 23, 59, config.timeZone).getTime() + 60_000);
-  const busy = await fetchBusy(dayStart.toISOString(), dayEnd.toISOString());
+  let busy;
+  try {
+    busy = await fetchBusy(dayStart.toISOString(), dayEnd.toISOString());
+  } catch (err) {
+    console.error("[timesync] fetchBusy failed", err);
+    return json(
+      { error: "Calendar is temporarily unavailable. Please try again shortly." },
+      { status: 503 },
+    );
+  }
   const slots = computeSlots(dateStr, et.id, busy, new Date());
   const stillFree = slots.some((s) => new Date(s.start).getTime() === startDate.getTime());
   if (!stillFree) {
