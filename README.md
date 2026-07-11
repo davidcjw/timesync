@@ -32,6 +32,7 @@ email both sides.
 - [Embedding in another app](#embedding-in-another-app)
 - [HTTP API](#http-api)
 - [Deploy to Vercel](#deploy-to-vercel)
+- [Troubleshooting](#troubleshooting)
 - [Design system](#design-system)
 - [Tech stack](#tech-stack)
 - [Contributing](#contributing)
@@ -138,6 +139,11 @@ All endpoints return JSON and send permissive CORS headers, so you can build a f
 - `POST /api/book` → `{ eventTypeId, start, name, email, notes }` → creates the event.
   Re-validates the slot server-side and returns `409` if it was just taken.
 
+When the owner's Google refresh token has expired or been revoked, `/api/availability` and
+`/api/book` return **`503`** with `{ "error": "...", "code": "reauth_required" }` (never an
+unhandled `500`). The widget surfaces this as a *"Calendar temporarily unavailable"* message.
+See [Troubleshooting](#troubleshooting).
+
 ---
 
 ## Deploy to Vercel
@@ -146,6 +152,32 @@ All endpoints return JSON and send permissive CORS headers, so you can build a f
 2. Update your Google OAuth redirect URI to the production
    `https://<your-domain>/api/auth/google/callback`.
 3. Deploy. The favicon (`app/icon.svg`) is included.
+
+---
+
+## Troubleshooting
+
+### Bookings fail with "Calendar temporarily unavailable" / re-authenticate
+
+Google refresh tokens can stop working — most commonly with an `invalid_grant` error. This happens
+when the token is revoked (owner removed the app under [Google Account → Security → Third-party
+access](https://myaccount.google.com/connections)), the password is changed, the token sits unused
+past its expiry, or a project still in **Testing** mode expires the token after 7 days.
+
+When this happens the calendar APIs return a typed **`503 { code: "reauth_required" }`** (not a
+generic `500`), and the booking widget shows *"Calendar temporarily unavailable — the owner needs to
+re-authenticate."*
+
+**Fix — mint a fresh refresh token:**
+
+1. Visit **`/setup`** on your deployment and click **Connect Google Calendar** (re-runs the OAuth
+   consent flow). This mints a new `GOOGLE_REFRESH_TOKEN`.
+2. Update `GOOGLE_REFRESH_TOKEN` in your host's environment variables (locally it's rewritten into
+   `.env.local`).
+3. Redeploy / restart the server so the new token is picked up.
+
+To avoid the recurring 7-day expiry, move your Google Cloud OAuth consent screen from **Testing** to
+**In production** (publishing status), so refresh tokens no longer auto-expire.
 
 ---
 

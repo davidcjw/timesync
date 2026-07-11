@@ -22,6 +22,9 @@ embeddable modal. No database — Google Calendar is the source of truth.
 - **`lib/provider.ts`** — picks `lib/google.ts` (real free/busy + event insert) when `isLive()`,
   else deterministic mock busy blocks. **All calendar access goes through here.**
 - **`lib/google.ts`** — `googleapis` OAuth + `freebusy.query` + `events.insert` (with Meet link).
+  Wraps calls so an expired/revoked refresh token (`invalid_grant`) throws a typed `CalendarAuthError`
+  (re-exported from `lib/provider.ts`); routes map it to a `503 { code: "reauth_required" }` (via
+  `reauthRequired` in `lib/cors.ts`) instead of a generic 500.
 - **`lib/clientHooks.ts`** — `useOrigin` / `useBookerTimeZone` via `useSyncExternalStore`
   (SSR-safe, and avoids the `set-state-in-effect` lint rule).
 
