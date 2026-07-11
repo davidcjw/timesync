@@ -6,6 +6,9 @@ import type { Interval } from "./availability";
 import { zonedDateParts, zonedWallToUtc } from "./time";
 import * as gcal from "./google";
 
+// Re-exported so routes catch the typed re-auth error via the provider boundary.
+export { CalendarAuthError } from "./google";
+
 export async function fetchBusy(timeMin: string, timeMax: string): Promise<Interval[]> {
   if (isLive()) return gcal.getBusy(timeMin, timeMax);
   return mockBusy(timeMin);

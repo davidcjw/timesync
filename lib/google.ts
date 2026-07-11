@@ -7,6 +7,44 @@ const SCOPES = [
   "https://www.googleapis.com/auth/calendar.readonly",
 ];
 
+/**
+ * Thrown when Google rejects the stored refresh token (`invalid_grant`) — i.e.
+ * the token was revoked/expired and the owner must re-run the OAuth flow.
+ * Routes translate this into an HTTP 503 with `code: "reauth_required"` instead
+ * of a generic 500, so the UI can show a clear message.
+ */
+export class CalendarAuthError extends Error {
+  readonly code = "reauth_required" as const;
+  constructor(message = "Calendar authorization has expired — the owner needs to re-authenticate.") {
+    super(message);
+    this.name = "CalendarAuthError";
+  }
+}
+
+/** Detect the Google OAuth `invalid_grant` failure across its several shapes. */
+export function isInvalidGrant(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const e = err as {
+    message?: unknown;
+    response?: { data?: { error?: unknown; error_description?: unknown } };
+  };
+  const data = e.response?.data;
+  const candidates: unknown[] = [e.message, data?.error, data?.error_description];
+  return candidates.some(
+    (c) => typeof c === "string" && c.toLowerCase().includes("invalid_grant"),
+  );
+}
+
+/** Run a calendar call, converting an expired-refresh-token error into a typed one. */
+async function withAuthErrors<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (isInvalidGrant(err)) throw new CalendarAuthError();
+    throw err;
+  }
+}
+
 function client(redirectUri?: string) {
   return new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
@@ -36,14 +74,16 @@ function calendar() {
 }
 
 export async function getBusy(timeMin: string, timeMax: string): Promise<Interval[]> {
-  const res = await calendar().freebusy.query({
-    requestBody: {
-      timeMin,
-      timeMax,
-      timeZone: config.timeZone,
-      items: [{ id: "primary" }],
-    },
-  });
+  const res = await withAuthErrors(() =>
+    calendar().freebusy.query({
+      requestBody: {
+        timeMin,
+        timeMax,
+        timeZone: config.timeZone,
+        items: [{ id: "primary" }],
+      },
+    }),
+  );
   const busy = res.data.calendars?.primary?.busy ?? [];
   return busy
     .filter((b): b is { start: string; end: string } => Boolean(b.start && b.end))
@@ -61,24 +101,26 @@ export type CreateEventArgs = {
 
 export async function createEvent(args: CreateEventArgs) {
   const requestId = `timesync-${Date.now()}-${Math.round(Math.random() * 1e9).toString(36)}`;
-  const res = await calendar().events.insert({
-    calendarId: "primary",
-    conferenceDataVersion: 1,
-    sendUpdates: "all",
-    requestBody: {
-      summary: args.summary,
-      description: args.description,
-      start: { dateTime: args.start, timeZone: config.timeZone },
-      end: { dateTime: args.end, timeZone: config.timeZone },
-      attendees: [{ email: args.attendeeEmail, displayName: args.attendeeName }],
-      conferenceData: {
-        createRequest: {
-          requestId,
-          conferenceSolutionKey: { type: "hangoutsMeet" },
+  const res = await withAuthErrors(() =>
+    calendar().events.insert({
+      calendarId: "primary",
+      conferenceDataVersion: 1,
+      sendUpdates: "all",
+      requestBody: {
+        summary: args.summary,
+        description: args.description,
+        start: { dateTime: args.start, timeZone: config.timeZone },
+        end: { dateTime: args.end, timeZone: config.timeZone },
+        attendees: [{ email: args.attendeeEmail, displayName: args.attendeeName }],
+        conferenceData: {
+          createRequest: {
+            requestId,
+            conferenceSolutionKey: { type: "hangoutsMeet" },
+          },
         },
       },
-    },
-  });
+    }),
+  );
   const ev = res.data;
   const meetLink =
     ev.hangoutLink ??

@@ -114,6 +114,7 @@ export default function BookingWidget({
   const [slots, setSlots] = useState<Slot[] | null>(null);
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsError, setSlotsError] = useState(false);
+  const [slotsErrorMsg, setSlotsErrorMsg] = useState<string | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
 
   const [step, setStep] = useState<"pick" | "details" | "done">("pick");
@@ -132,11 +133,17 @@ export default function BookingWidget({
     setSlotsLoading(true);
     setSlots(null);
     setSlotsError(false);
+    setSlotsErrorMsg(null);
     try {
       const r = await fetch(`/api/availability?date=${dateStr}&eventType=${etId}`);
       if (!r.ok) {
+        const j = await r.json().catch(() => null);
         setSlots([]);
         setSlotsError(true);
+        // Surface the owner-needs-to-re-authenticate case explicitly.
+        if (j?.code === "reauth_required" && typeof j.error === "string") {
+          setSlotsErrorMsg(j.error);
+        }
         return;
       }
       const j = await r.json();
@@ -322,6 +329,7 @@ export default function BookingWidget({
                 slots={slots}
                 loading={slotsLoading}
                 error={slotsError}
+                errorMsg={slotsErrorMsg}
                 onPick={pickSlot}
               />
             </div>
@@ -692,6 +700,7 @@ function SlotPanel({
   slots,
   loading,
   error,
+  errorMsg,
   onPick,
 }: {
   selectedDate: string | null;
@@ -699,6 +708,7 @@ function SlotPanel({
   slots: Slot[] | null;
   loading: boolean;
   error: boolean;
+  errorMsg?: string | null;
   onPick: (slot: Slot) => void;
 }) {
   return (
@@ -720,8 +730,12 @@ function SlotPanel({
         ) : error ? (
           <div className="flex h-full flex-col items-center justify-center py-10 text-center">
             <AlertTriangle className="h-7 w-7 text-faint" />
-            <p className="mt-2 text-sm font-bold text-ink">Couldn’t load times</p>
-            <p className="font-mono text-[11px] text-muted">Please try again shortly.</p>
+            <p className="mt-2 text-sm font-bold text-ink">
+              {errorMsg ? "Calendar temporarily unavailable" : "Couldn’t load times"}
+            </p>
+            <p className="mt-1 max-w-[240px] font-mono text-[11px] text-muted">
+              {errorMsg ?? "Please try again shortly."}
+            </p>
           </div>
         ) : slots && slots.length > 0 ? (
           slots.map((slot) => (

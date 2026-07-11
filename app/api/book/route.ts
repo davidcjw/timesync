@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { config, getEventType } from "@/lib/config";
 import { computeSlots } from "@/lib/availability";
-import { book, fetchBusy } from "@/lib/provider";
+import { book, fetchBusy, CalendarAuthError } from "@/lib/provider";
 import { toDateStr, zonedDateParts, zonedWallToUtc } from "@/lib/time";
-import { json, preflight } from "@/lib/cors";
+import { json, preflight, reauthRequired } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +45,10 @@ export async function POST(req: NextRequest) {
   try {
     busy = await fetchBusy(dayStart.toISOString(), dayEnd.toISOString());
   } catch (err) {
+    if (err instanceof CalendarAuthError) {
+      console.error("[timesync] calendar re-auth required", err);
+      return reauthRequired(err.message);
+    }
     console.error("[timesync] fetchBusy failed", err);
     return json(
       { error: "Calendar is temporarily unavailable. Please try again shortly." },
@@ -81,6 +85,10 @@ export async function POST(req: NextRequest) {
       ...result,
     });
   } catch (err) {
+    if (err instanceof CalendarAuthError) {
+      console.error("[timesync] calendar re-auth required", err);
+      return reauthRequired(err.message);
+    }
     console.error("[timesync] booking failed", err);
     return json({ error: "Could not create the event. Please try again." }, { status: 500 });
   }

@@ -1,9 +1,9 @@
 import type { NextRequest } from "next/server";
 import { config } from "@/lib/config";
 import { computeSlots } from "@/lib/availability";
-import { fetchBusy } from "@/lib/provider";
+import { fetchBusy, CalendarAuthError } from "@/lib/provider";
 import { parseDateStr, zonedWallToUtc } from "@/lib/time";
-import { json, preflight } from "@/lib/cors";
+import { json, preflight, reauthRequired } from "@/lib/cors";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,10 @@ export async function GET(req: NextRequest) {
   try {
     busy = await fetchBusy(dayStart.toISOString(), dayEnd.toISOString());
   } catch (err) {
+    if (err instanceof CalendarAuthError) {
+      console.error("[timesync] calendar re-auth required", err);
+      return reauthRequired(err.message);
+    }
     console.error("[timesync] fetchBusy failed", err);
     return json(
       { error: "Calendar is temporarily unavailable. Please try again shortly." },
